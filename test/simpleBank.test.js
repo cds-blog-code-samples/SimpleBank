@@ -1,14 +1,43 @@
 var SimpleBank = artifacts.require('./SimpleBank.sol')
 
+// Drew inspiration from here.
+// https://ethereum.stackexchange.com/questions/48627/how-to-catch-revert-error-in-truffle-test-javascript
+//
+const PREFIX = 'VM Exception while processing transaction: '
+
+const errTypes = {
+  revert: 'revert',
+  outOfGas: 'out of gas',
+  invalidJump: 'invalid JUMP',
+  invalidOpcode: 'invalid opcode',
+  stackOverflow: 'stack overflow',
+  stackUnderflow: 'stack underflow',
+  staticStateChange: 'static state change'
+}
+
+const tryCatch = async (promise, errType, message) => {
+  try {
+    await promise
+    throw new Error(message)
+  } catch (error) {
+    // console.log('errrrrror', error)
+    assert(
+      error.message.startsWith(PREFIX + errType),
+      "Expected an error starting with '" + PREFIX + errType
+    )
+  }
+}
+
 contract('SimpleBank', function(accounts) {
-  /* const owner = accounts[0]
-   * const alice = accounts[1];
-   * const bob = accounts[2]; */
   const [owner, alice, bob] = accounts
 
-  it('should put 1000 tokens in the first and second account', async () => {
-    const bank = await SimpleBank.deployed()
+  let bank
 
+  beforeEach('setup contract for each test', async () => {
+    bank = await SimpleBank.new()
+  })
+
+  it('should put 1000 tokens in the first and second account', async () => {
     await bank.enroll({ from: alice })
     await bank.enroll({ from: bob })
 
@@ -35,7 +64,6 @@ contract('SimpleBank', function(accounts) {
   })
 
   it('should deposit correct amount', async () => {
-    const bank = await SimpleBank.deployed()
     const deposit = web3.toBigNumber(2)
 
     await bank.enroll({ from: alice })
@@ -76,7 +104,6 @@ contract('SimpleBank', function(accounts) {
   })
 
   it('should withdraw correct amount', async () => {
-    const bank = await SimpleBank.deployed()
     const deposit = web3.toBigNumber(2)
     const initialAmount = 1000
 
@@ -93,5 +120,13 @@ contract('SimpleBank', function(accounts) {
       balance,
       'withdraw amount incorrect, check withdraw method'
     )
+  })
+
+  it('should not let the same user enroll twice', async () => {
+    const doubleDip = async () => {
+      await bank.enroll({ from: alice })
+      await bank.enroll({ from: alice })
+    }
+    await tryCatch(doubleDip(), errTypes.revert)
   })
 })

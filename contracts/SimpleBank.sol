@@ -3,26 +3,53 @@ pragma solidity ^0.4.13;
 
 contract SimpleBank {
 
-    /* Fill in the keyword. Hint: We want to protect our users balance from other contracts*/
     mapping (address => uint) private balances;
+    mapping (address => bool) private customers;
 
-    /* Let's make sure everyone knows who owns the bank. Use the appropriate keyword for this*/
     address public owner;
 
-    // Events - publicize actions to external listeners
-    /* Add 2 arguments for this event, an accountAddress and an amount */
     event LogDepositMade(address accountAddress, uint amount);
 
+    modifier isCustomer(address _address) {
+        require (
+            customers[msg.sender] == true,
+            "User is not a bank customer"
+        );
+        _;
+    }
+
+    modifier isNotCustomer() {
+        require (
+            customers[msg.sender] == false,
+            "User is already a bank customer"
+        );
+        _;
+    }
+
     // Constructor, can receive one or many variables here; only one allowed
-    constructor() {
+    constructor() public {
         /* Set the owner to the creator of this contract */
         owner = msg.sender;
     }
 
+    // Fallback function - Called if other functions don't match call or
+    // sent ether without data
+    // Typically, called when invalid data is sent
+    // Added so ether sent to this contract is reverted if the contract fails
+    // otherwise, the sender's money is transferred to contract
+    function () public {
+        revert();
+    }
+
     /// @notice Enroll a customer with the bank, giving them 1000 tokens for free
     /// @return The balance of the user after enrolling
-    function enroll() public returns (uint){
-      /* Set the sender's balance to 1000, return the sender's balance */
+    function enroll()
+      public isNotCustomer()
+      returns (uint)
+    {
+        // add new customer and set balance
+        customers[msg.sender] = true;
+
         balances[msg.sender] = 1000;
         return balances[msg.sender];
     }
@@ -31,8 +58,6 @@ contract SimpleBank {
     /// @return The balance of the user after the deposit is made
     // Add the appropriate keyword so that this function can receive ether
     function deposit() public payable returns (uint) {
-        /* Add the amount to the user's balance, call the event associated with a deposit,
-          then return the balance of the user */
         balances[msg.sender] += msg.value;
         emit LogDepositMade(msg.sender, msg.value);
         return balances[msg.sender];
@@ -62,12 +87,4 @@ contract SimpleBank {
         return balances[msg.sender];
     }
 
-    // Fallback function - Called if other functions don't match call or
-    // sent ether without data
-    // Typically, called when invalid data is sent
-    // Added so ether sent to this contract is reverted if the contract fails
-    // otherwise, the sender's money is transferred to contract
-    function () {
-        revert();
-    }
 }
