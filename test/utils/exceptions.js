@@ -19,10 +19,19 @@ const tryCatch = async (promise, errType, message) => {
     throw new Error(message)
   } catch (error) {
     console.log(error.message)
-    assert(
-      error.message.startsWith(PREFIX + errType),
-      "Expected an error starting with '" + PREFIX + errType
-    )
+    // todo: file issue with ganache-cli
+    //
+    // expect:   error.message to be PREFIX + revert
+    // observed: error.message to be something else
+    // msg @chris_smith when issue is created
+    if (errType === 'revert') {
+      assert(error.toString().includes('revert'), 'Expected a `revert`')
+    } else {
+      assert(
+        error.message.startsWith(PREFIX + errType),
+        "Expected an error starting with '" + PREFIX + errType
+      )
+    }
   }
 }
 
