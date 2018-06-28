@@ -86,5 +86,4 @@ contract SimpleBank {
         /* Get the balance of the sender of this transaction */
         return balances[msg.sender];
     }
-
 }
