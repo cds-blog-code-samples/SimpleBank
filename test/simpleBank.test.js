@@ -95,7 +95,7 @@ contract('SimpleBank', function(accounts) {
     )
   })
 
-  it('should not let the same user enroll twice', async () => {
+  it.only('should not let the same user enroll twice', async () => {
     const doubleDip = async () => {
       await bank.enroll({ from: alice })
       await bank.enroll({ from: alice })

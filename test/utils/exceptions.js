@@ -18,7 +18,7 @@ const tryCatch = async (promise, errType, message) => {
     await promise
     throw new Error(message)
   } catch (error) {
-    // console.log('errrrrror', error)
+    console.log(error.message)
     assert(
       error.message.startsWith(PREFIX + errType),
       "Expected an error starting with '" + PREFIX + errType
